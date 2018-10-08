@@ -1,0 +1,149 @@
+<html>
+	<body>
+		<h3>Python script</h3>
+		<p>
+			A developer configures T-Check using an extended version of TOSSIM's configuration mechanism, via a Python script.
+		</p>
+		
+		<p>
+			Users can refer to <a href = "http://docs.tinyos.net/index.php/TOSSIM">TOSSIM link</a> to learn how to write the python script for TOSSIM. 
+			In addition to APIs currently provided by TOSSIM, T-Check extends the following APIs.
+		</p>
+		
+<ul>		
+    <li> 
+     	<b><code>
+     		initMoteNum(int moteNum, int propertyNum)
+     	</code></b>
+     	: tells T-Check how many motes and sets of property will be involved in T-Check initially, this function should always be called in the first place;
+    </li>
+
+     <li> 
+    	<b><code>
+    		setLossAndBiasingAndTossim(int loss_mode, int bias_mode, int tossim_mode)
+    	</code></b>
+    	: sets loss mode, biasing mode and TOSSIM-supporting mode for T-Check.
+     </li>
+     
+     <ul>
+     	  <li> loss mode, which controls the packet loss, has four options: 
+    			<ul>
+            <li> No-loss: 0, the whole network does not lose any packet; 
+            <li> Loss_random: 1, the packet loss occurs randomly; 
+            <li> Loss_noise: 2, the packet loss is leaded via TOSSIM's noise model; 
+            <li> Loss_probability: 3, the packet loss is guided according to probability specified by users, and those probability is set via three set functions described below.
+         </ul>
+       
+       <li> biasing mode, which guides the event choosing, has two options: 
+       	<ul>
+       	 <li> Flattening: 0, all events among all motes should be chosen equally; 
+       	 <li> Biasing: 1, The communication events in a node are treated with higher probability than other events.
+        </ul>
+  
+      
+       <li> TOSSIM-supporting mode has two options: 
+      	<ul>
+      	  <li> No-TOSSIM-support: 0; 
+      	  <li> TOSSIM-support: 1.
+        </ul>
+    </ul>
+    
+     <li> 
+     	<b><code>
+     		SetDeltaDebugging(int deltaDebugging)
+     	</code></b>
+     	: sets whether to shorten the error trace.
+    </li>
+    <ul>
+      <li> No-debugging: 0; 
+    	<li> Debugging: 1;
+    </ul>
+    
+    <li> 
+     	<b><code>
+    	  mcMoteDeath(int mote, int step) 
+    	</code></b>
+      : mote death. 
+    </li>
+    <ul>
+     <li> First argument denotes mote number;
+     <li> Second argument represents the step where death occurs.
+    </ul>
+    
+    <li> 
+     	<b><code>
+    	  mcMoteRevival(int mote, int step) 
+    	</code></b>
+      : mote revial, often used with mcMoteDeath. 
+    </li>
+    <ul>
+     <li> First argument denotes mote number;
+     <li> Second argument represents the step where revival occurs.
+    </ul>
+    
+    <li> 
+     	<b><code>
+    	  mcMoteReboot(int mote, int step) 
+    	</code></b>
+      : mote reboot. 
+    </li>
+    <ul>
+     <li> First argument denotes mote number;
+     <li> Second argument represents the step where reboot occurs.
+    </ul>
+    
+    <li> 
+     	<b><code>
+    	  setSendProb(double prob) 
+    	</code></b>
+      : sets the packet transimission success ratio. 
+    </li>
+    
+    <li> 
+     	<b><code>
+    	  setReceiveProb(double prob) 
+    	</code></b>
+      : sets the packet reception success ratio. 
+    </li>
+    
+    <li> 
+     	<b><code>
+    	  setAckProb(double prob) 
+    	</code></b>
+      : sets the packet acknowledgement success ratio. 
+    </li>
+    
+    <li> 
+     	<b><code> 
+    	  startModelChecking(char* MODE, int MC_BOUND, int RW_BOUND)
+    	</code></b>
+      : sets arguments for combination of DFS and random walk. 
+    </li>
+   
+    <ul>
+      <li> MODE determines what kinds of DFS will be used, classic DFS or POR-based DFS, "DFS" symbol activates classic DFS, while "DFSPOR" starts POR-based DFS; 
+      <li> MC_BOUND denotes the DFS bound; 
+      <li> RW_BOUND represents the bound of random walk following DFS phase, there is no random walk if this parameter is set as 0;
+    </ul> 
+    
+    
+     <li> 
+     	<b><code> 
+    	  startRandomWalk(int RW_BOUND, int ROUNDS)
+    	</code></b>
+      : sets arguments for pure random walk, which means there is no model checking. 
+    </li>
+    
+    <ul> 
+      <li> RW_BOUND denotes the random walk bound; 
+      <li> ROUNDS represents the number of rounds random walk will run;
+    </ul> 
+
+    
+</ul>
+
+<p>Users can refer to the example python program <a href = "files/test.py">test.py</a> for MultihopOscilloscope</p>
+
+  
+</body>
+</html>

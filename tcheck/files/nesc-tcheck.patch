@@ -1,0 +1,572 @@
+? nesc-tcheck.patch
+? tools/java/net/tinyos/nesc/dump/NDReader.class
+? tools/java/net/tinyos/nesc/dump/xml/CDefinition.class
+? tools/java/net/tinyos/nesc/dump/xml/Constant.class
+? tools/java/net/tinyos/nesc/dump/xml/Container.class
+? tools/java/net/tinyos/nesc/dump/xml/DataDefinition.class
+? tools/java/net/tinyos/nesc/dump/xml/Definition.class
+? tools/java/net/tinyos/nesc/dump/xml/DefinitionTable.class
+? tools/java/net/tinyos/nesc/dump/xml/DocumentationString.class
+? tools/java/net/tinyos/nesc/dump/xml/FloatConstant.class
+? tools/java/net/tinyos/nesc/dump/xml/Implementation.class
+? tools/java/net/tinyos/nesc/dump/xml/IntegerConstant.class
+? tools/java/net/tinyos/nesc/dump/xml/KnownConstant.class
+? tools/java/net/tinyos/nesc/dump/xml/Location.class
+? tools/java/net/tinyos/nesc/dump/xml/NDElement.class
+? tools/java/net/tinyos/nesc/dump/xml/NDList.class
+? tools/java/net/tinyos/nesc/dump/xml/NescDefinition.class
+? tools/java/net/tinyos/nesc/dump/xml/NonConstant.class
+? tools/java/net/tinyos/nesc/dump/xml/SimpleType.class
+? tools/java/net/tinyos/nesc/dump/xml/StringConstant.class
+? tools/java/net/tinyos/nesc/dump/xml/StructureDefinition.class
+? tools/java/net/tinyos/nesc/dump/xml/TagDefinition.class
+? tools/java/net/tinyos/nesc/dump/xml/Type.class
+? tools/java/net/tinyos/nesc/dump/xml/UnknownConstant.class
+? tools/java/net/tinyos/nesc/dump/xml/Value.class
+? tools/java/net/tinyos/nesc/dump/xml/WiringEndpoint.class
+? tools/java/net/tinyos/nesc/dump/xml/WiringGraph.class
+? tools/java/net/tinyos/nesc/dump/xml/WiringNode.class
+? tools/java/net/tinyos/nesc/dump/xml/WiringScan.class
+? tools/java/net/tinyos/nesc/dump/xml/WiringScanBackwards.class
+? tools/java/net/tinyos/nesc/dump/xml/WiringScanForwards.class
+? tools/java/net/tinyos/nesc/dump/xml/Xarguments.class
+? tools/java/net/tinyos/nesc/dump/xml/Xarray_element.class
+? tools/java/net/tinyos/nesc/dump/xml/Xattribute.class
+? tools/java/net/tinyos/nesc/dump/xml/Xattribute_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xattribute_value.class
+? tools/java/net/tinyos/nesc/dump/xml/Xcomponent.class
+? tools/java/net/tinyos/nesc/dump/xml/Xcomponent_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xcomponents.class
+? tools/java/net/tinyos/nesc/dump/xml/Xconfiguration.class
+? tools/java/net/tinyos/nesc/dump/xml/Xconstant.class
+? tools/java/net/tinyos/nesc/dump/xml/Xconstant_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xconstants.class
+? tools/java/net/tinyos/nesc/dump/xml/Xdocumentation.class
+? tools/java/net/tinyos/nesc/dump/xml/Xenum.class
+? tools/java/net/tinyos/nesc/dump/xml/Xenum_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xfield.class
+? tools/java/net/tinyos/nesc/dump/xml/Xfrom.class
+? tools/java/net/tinyos/nesc/dump/xml/Xfunction.class
+? tools/java/net/tinyos/nesc/dump/xml/Xfunction_parameters.class
+? tools/java/net/tinyos/nesc/dump/xml/Xfunction_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xfunctions.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinstance.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterface.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterface_functions.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterface_parameters.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterface_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterfacedef.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterfacedef_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterfacedefs.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinterfaces.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinternal_component.class
+? tools/java/net/tinyos/nesc/dump/xml/Xinternal_component_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xlong.class
+? tools/java/net/tinyos/nesc/dump/xml/Xmodule.class
+? tools/java/net/tinyos/nesc/dump/xml/Xnesc.class
+? tools/java/net/tinyos/nesc/dump/xml/Xnx_struct.class
+? tools/java/net/tinyos/nesc/dump/xml/Xnx_struct_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xnx_union.class
+? tools/java/net/tinyos/nesc/dump/xml/Xnx_union_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xparameters.class
+? tools/java/net/tinyos/nesc/dump/xml/Xshort.class
+? tools/java/net/tinyos/nesc/dump/xml/Xstruct.class
+? tools/java/net/tinyos/nesc/dump/xml/Xstruct_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xstructured_element.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtags.class
+? tools/java/net/tinyos/nesc/dump/xml/Xto.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_array.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_complex_float.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_complex_int.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_component.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_float.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_function.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_int.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_interface.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_pointer.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_qualified.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_tag.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_var.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtype_void.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtypedef.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtypedef_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtypedefs.class
+? tools/java/net/tinyos/nesc/dump/xml/Xtypename.class
+? tools/java/net/tinyos/nesc/dump/xml/Xunion.class
+? tools/java/net/tinyos/nesc/dump/xml/Xunion_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvalue.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvalue_array.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvalue_structured.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvarargs.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvariable.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvariable_ref.class
+? tools/java/net/tinyos/nesc/dump/xml/Xvariables.class
+? tools/java/net/tinyos/nesc/dump/xml/Xwire.class
+? tools/java/net/tinyos/nesc/dump/xml/Xwiring.class
+? tools/java/net/tinyos/nesc/wiring/WiringCheck.class
+Index: src/flags.c
+===================================================================
+RCS file: /cvsroot/nescc/nesc/src/flags.c,v
+retrieving revision 1.20
+diff -u -b -p -r1.20 flags.c
+--- src/flags.c	20 Apr 2010 23:50:40 -0000	1.20
++++ src/flags.c	23 Apr 2010 23:32:09 -0000
+@@ -303,6 +303,9 @@ int flag_deputy;
+    be overridden by -fnesc-default-safe or -fnesc-default-unsafe */
+ int flag_default_safe;
+ 
++/* True if TCheck option is activated */
++int flag_mc_state;
++
+ /* True if transforming plain C code */
+ int flag_c;
+ 
+Index: src/flags.h
+===================================================================
+RCS file: /cvsroot/nescc/nesc/src/flags.h,v
+retrieving revision 1.20
+diff -u -b -p -r1.20 flags.h
+--- src/flags.h	20 Apr 2010 23:50:40 -0000	1.20
++++ src/flags.h	23 Apr 2010 23:32:09 -0000
+@@ -300,6 +300,8 @@ extern int flag_deputy;
+    be overridden by -fnesc-default-safe or -fnesc-default-unsafe */
+ extern int flag_default_safe;
+ 
++extern int flag_mc_state;
++
+ /* True if transforming plain C code */
+ extern int flag_c;
+ 
+Index: src/nesc-generate.c
+===================================================================
+RCS file: /cvsroot/nescc/nesc/src/nesc-generate.c,v
+retrieving revision 1.67
+diff -u -b -p -r1.67 nesc-generate.c
+--- src/nesc-generate.c	2 Jul 2009 17:35:39 -0000	1.67
++++ src/nesc-generate.c	23 Apr 2010 23:32:09 -0000
+@@ -33,6 +33,9 @@ Boston, MA 02111-1307, USA.  */
+ #include "nesc-atomic.h"
+ #include "nesc-cpp.h"
+ 
++#define NIDO_COPY 1
++#define NIDO_COPYBACK 2
++
+ static void prt_nesc_function_hdr(data_declaration fn_decl,
+ 				  psd_options options)
+ /* Effects: prints the C function declaration for fn_decl
+@@ -960,7 +963,7 @@ static void suppress_function(const char
+     d->suppress_definition = TRUE;
+ }
+ 
+-static void prt_ddecl_for_init(region r, data_declaration ddecl)
++static void prt_ddecl_for_init(region r, data_declaration ddecl, int flag)
+ {
+   type_quals dquals = type_qualifiers(ddecl->type);
+   if (dquals & const_qualifier)
+@@ -979,7 +982,10 @@ static void prt_ddecl_for_init(region r,
+       prt_asttype(nc_type);
+       output(")&");
+     }
++    if(flag)
++      set_for_mc();
+   prt_plain_ddecl(ddecl, 0);
++    reset_for_mc();
+   output("[__nesc_mote]");
+ }
+ 
+@@ -996,9 +1002,9 @@ static void prt_nido_initializer(region 
+   if (!init)
+     {
+       output("memset((void *)&");
+-      prt_ddecl_for_init(r, ddecl);
++      prt_ddecl_for_init(r, ddecl, FALSE);
+       output(", 0, sizeof ");
+-      prt_ddecl_for_init(r, ddecl);
++      prt_ddecl_for_init(r, ddecl, FALSE);
+       output(")");
+     }
+   else if (is_init_list(init))
+@@ -1007,7 +1013,7 @@ static void prt_nido_initializer(region 
+       type_element vmods;
+ 
+       output("memcpy((void *)&");
+-      prt_ddecl_for_init(r, ddecl);
++      prt_ddecl_for_init(r, ddecl, FALSE);
+ 
+       output(", (void *)&");
+       type2ast(parse_region, dummy_location, ddecl->type, NULL,
+@@ -1018,12 +1024,12 @@ static void prt_nido_initializer(region 
+       prt_expression(init, P_ASSIGN);
+ 
+       output(", sizeof ");
+-      prt_ddecl_for_init(r, ddecl);
++      prt_ddecl_for_init(r, ddecl, FALSE);
+       output(")");
+     }
+   else 
+     {
+-      prt_ddecl_for_init(r, ddecl);
++      prt_ddecl_for_init(r, ddecl, FALSE);
+       output(" = ");
+       prt_expression(init, P_ASSIGN);
+     }
+@@ -1069,6 +1075,92 @@ static void prt_nido_initializations(nes
+   newline();
+ }
+ 
++static void prt_nido_function(region r, variable_decl vd, int flag)
++{
++  data_declaration ddecl = vd->ddecl;
++  bool mc = (flag == NIDO_COPY) ? TRUE : FALSE;
++
++  if (!ddecl || !ddecl->isused || ddecl->kind != decl_variable)
++    return; /* Don't print if not referenced */
++
++      output("memcpy((void *)&");
++  prt_ddecl_for_init(r, ddecl, mc);
++      output(", (void *)&");
++  prt_ddecl_for_init(r, ddecl, !mc);
++  output(", sizeof(");
++  prt_ddecl_for_init(r, ddecl, FALSE);
++  outputln("));\n");
++}
++
++static void prt_nido_preservation_module(nesc_declaration mod, int flag)
++{
++  declaration dlist;
++  declaration d;
++  dd_list_pos lscan;
++  region r;
++
++  /* binary component? */
++  if (!is_module(mod->impl))
++    return;
++
++  r = newregion();
++  dlist = CAST(module, mod->impl)->decls;
++
++  /* Static variables */
++  scan_declaration (d, dlist)
++    {
++      declaration reald = ignore_extensions(d);
++      variable_decl vd;
++
++      if (reald->kind != kind_data_decl)
++	continue;
++
++      scan_variable_decl (vd, CAST(variable_decl, CAST(data_decl, d)->decls))
++	prt_nido_function(r, vd, flag);
++    }
++
++  /* Local static variables */
++  dd_scan (lscan, mod->local_statics)
++    {
++      data_declaration localsd = DD_GET(data_declaration, lscan);
++
++      prt_nido_function(r, CAST(variable_decl, localsd->ast), flag);
++    }
++  deleteregion(r);
++  newline();
++}
++
++static void prt_nido_preservation_modules(dd_list modules, char* prefix, int flag)
++{
++  dd_list_pos mod;
++
++  nido_mote_number = "__nesc_mote";
++
++  outputln(prefix);
++  outputln("{");
++  indent();
++
++  //set_for_mc();
++  dd_scan (mod, modules) 
++  prt_nido_preservation_module(DD_GET(nesc_declaration, mod), flag);
++  //reset_for_mc();
++
++  unindent();
++  outputln("}");
++}
++
++static void prt_nido_copy(dd_list modules)
++{
++  char *prefix = "void sim_mc_state_copy(int __nesc_mote)";
++  prt_nido_preservation_modules(modules, prefix, NIDO_COPY);
++}
++
++static void prt_nido_copyback(dd_list modules)
++{
++  char *prefix = "void sim_mc_state_copyback(int __nesc_mote)";
++  prt_nido_preservation_modules(modules, prefix, NIDO_COPYBACK);
++}
++
+ static void prt_nido_initialize(dd_list modules) 
+ {
+   dd_list_pos mod;
+@@ -1152,32 +1244,48 @@ void prt_nesc_typedefs(nesc_declaration 
+     prt_configuration_declarations(CAST(configuration, comp->impl)->decls);
+ }
+ 
+-static void prt_nido_resolver(region r, variable_decl vd)
++static void _prt_nido_resolver(region r, data_declaration ddecl, bool flag)
+ {
+-  data_declaration ddecl = vd->ddecl;
+-  expression init;
+-
+-  if (!ddecl || !ddecl->isused || ddecl->kind != decl_variable)
+-    return; /* Don't print if not referenced */
+-
+-  init = vd->arg1;
+-
+   output("if (!strcmp(varname, \"");
++  if(flag)
++    {
++      set_for_mc();
++      prt_plain_ddecl(ddecl, psd_skip_comments);
++      reset_for_mc();
++    }
++  else
++    {
+   prt_plain_ddecl(ddecl, 0);
++    }
+   outputln("\"))");
+   outputln("{");
+   indent();
+   output("*addr = (uintptr_t)&");
+-  prt_ddecl_for_init(r, ddecl);
++  prt_ddecl_for_init(r, ddecl, flag);
+   outputln(";");
+   output("*size = sizeof(");
+-  prt_ddecl_for_init(r, ddecl);
++  prt_ddecl_for_init(r, ddecl, flag);
+   outputln(");");
+   outputln("return 0;");
+   unindent();
+   outputln("}");
+ }
+ 
++static void prt_nido_resolver(region r, variable_decl vd)
++{
++  data_declaration ddecl = vd->ddecl;
++  expression init;
++
++  if (!ddecl || !ddecl->isused || ddecl->kind != decl_variable)
++    return; /* Don't print if not referenced */
++
++  init = vd->arg1;
++
++  _prt_nido_resolver(r, ddecl, FALSE);
++  if(flag_mc_state)
++    _prt_nido_resolver(r, ddecl, TRUE);
++}
++
+ static void prt_nido_resolvers(nesc_declaration mod) 
+ {
+   declaration dlist;
+@@ -1237,7 +1345,8 @@ static void include_support_functions(vo
+     "__nesc_enable_interrupt",
+     "__nesc_disable_interrupt",
+     "__nesc_nido_initialise",
+-    "__nesc_nido_resolve"
++    "__nesc_nido_resolve",
++    "memcpy"
+   };
+   int i;
+ 
+@@ -1367,6 +1476,12 @@ void generate_c_code(const char *target_
+     {
+       prt_nido_resolver_function(modules);
+       disable_line_directives();
++      if(flag_mc_state)
++        {
++          //prt_nido_mc_initialize(modules);
++          prt_nido_copy(modules);
++          prt_nido_copyback(modules);
++        }
+       prt_nido_initialize(modules); 
+     }
+ 
+Index: src/nesc-main.c
+===================================================================
+RCS file: /cvsroot/nescc/nesc/src/nesc-main.c,v
+retrieving revision 1.61
+diff -u -b -p -r1.61 nesc-main.c
+--- src/nesc-main.c	20 Apr 2010 23:50:40 -0000	1.61
++++ src/nesc-main.c	23 Apr 2010 23:32:09 -0000
+@@ -269,6 +269,8 @@ int nesc_option(char *p)
+     flag_default_safe = 0;
+   else if (!strcmp (p, "fnesc-gccize"))
+     flag_gccize = 1;
++  else if (!strcmp (p, "fnesc-mc-state"))
++    flag_mc_state = 1;
+   else if (!strcmp (p, "Wnesc-docstring"))
+     warn_unexpected_docstring = 1;
+   else if (!strcmp (p, "Wno-nesc-docstring"))
+Index: src/unparse.c
+===================================================================
+RCS file: /cvsroot/nescc/nesc/src/unparse.c,v
+retrieving revision 1.88
+diff -u -b -p -r1.88 unparse.c
+--- src/unparse.c	21 Apr 2010 20:05:52 -0000	1.88
++++ src/unparse.c	23 Apr 2010 23:32:09 -0000
+@@ -48,6 +48,7 @@ static int indent_level;
+ static struct location output_loc;
+ static location fixed_location;
+ static bool at_line_start;
++static bool prefix_mc;
+ 
+ /* separator used between module name and function name */
+ static char *function_separator = "$";
+@@ -58,6 +59,8 @@ static bool documentation_mode;
+ /* List of lines to output at start of file */
+ static dd_list unparse_header;
+ 
++static char *mc_prefix = "_mc_";
++
+ typedef struct prt_closure {
+   void (*fn)(struct prt_closure *closure);
+ 
+@@ -740,6 +743,16 @@ void prt_data_decl(data_decl d)
+       prt_variable_decl(d->modifiers, vdd, vopts);
+       opts |= psd_duplicate;
+       outputln(";");
++
++      if (vdecl && use_nido && flag_mc_state && is_module_variable(vdecl))
++        {
++          prefix_mc = TRUE;
++          //vopts &= ~psd_prefix_section_attribute;
++          //prt_diff_info(vdecl);
++          prt_variable_decl(d->modifiers, vdd, vopts);
++          prefix_mc = FALSE;
++          outputln(";");
++	}
+     }
+ 
+   if (!(opts & psd_duplicate))
+@@ -894,6 +907,18 @@ void prt_declarator(declarator d, type_e
+     }
+ }
+ 
++void _prt_container(nesc_declaration container, psd_options opts)
++{
++  if (container->original && !(opts & psd_skip_comments))
++    /* Put actual container name in a comment for human readers */
++    output("/*%s*/", container->instance_name);
++
++  if(prefix_mc)
++    output(mc_prefix);
++
++  output_stripped_string_dollar(container->name);
++}
++
+ void prt_container(nesc_declaration container)
+ {
+   if (container->original)
+@@ -907,7 +932,7 @@ void prt_plain_ddecl(data_declaration dd
+   if (!ddecl->Cname)
+     {
+       if (ddecl->container && !(options & psd_skip_container))
+-	prt_container(ddecl->container);
++	_prt_container(ddecl->container, options);
+       if (/*ddecl->kind == decl_function &&*/ ddecl->interface)
+ 	output_stripped_string_dollar(ddecl->interface->name);
+       if ((options & psd_print_default) &&
+@@ -1013,10 +1038,14 @@ bool prt_simple_declarator(declarator d,
+ 	  }
+ 	else
+ 	  {
++            bool _prefix_mc = prefix_mc;
++            prefix_mc = FALSE;
++
+ 	    set_location(ad->arg1->location);
+ 	    output("[");
+ 	    prt_expression(ad->arg1, P_TOP);
+ 	    output("]");
++	    prefix_mc = _prefix_mc;
+ 	  }
+ 	break;
+       }
+@@ -1172,11 +1201,16 @@ void prt_typename(typename tname, psd_op
+ {
+   data_declaration tdecl = tname->ddecl;
+   psd_options newopts = 0;
++  bool _prefix_mc;
+ 
+   set_location(tname->location);
+   if (type_network_base_type(tdecl->type) && (options & psd_rewrite_nxbase))
+     newopts |= psd_prefix_nxbase;
++
++  _prefix_mc = prefix_mc;
++  prefix_mc = FALSE;
+   prt_plain_ddecl(tdecl, newopts);
++  prefix_mc = _prefix_mc;
+ }
+ 
+ void prt_typeof_expr(typeof_expr texpr)
+@@ -1327,14 +1361,18 @@ void prt_tag_ref(tag_ref tr, psd_options
+ 	output("__nesc_attr_");
+       prt_word(tr->word1);
+     }
+-  if (!(options & psd_duplicate) && tr->defined)
++  if (!(options & psd_duplicate) && tr->defined && !prefix_mc)
+     {
+       if (tr->kind == kind_enum_ref)
+         prt_enumerators(tr->fields, tr->tdecl);
+       else if (type_network(make_tagged_type(tr->tdecl)))
+ 	prt_network_fields(tr);
+-      else
++      else {
++          bool _prefix_mc = prefix_mc;
++	  prefix_mc = FALSE;
+ 	prt_fields(tr->fields);
++	  prefix_mc = _prefix_mc;
++      }
+     }
+   if (tr->attributes)
+     {
+@@ -2452,3 +2490,18 @@ void prt_default_label(default_label l)
+   set_location(l->location);
+   output("default");
+ }
++
++bool is_for_mc()
++{
++  return prefix_mc;
++}
++
++void set_for_mc()
++{
++  prefix_mc = TRUE;
++}
++
++void reset_for_mc()
++{
++  prefix_mc = FALSE;
++}
+Index: src/unparse.h
+===================================================================
+RCS file: /cvsroot/nescc/nesc/src/unparse.h,v
+retrieving revision 1.27
+diff -u -b -p -r1.27 unparse.h
+--- src/unparse.h	20 Apr 2010 23:50:40 -0000	1.27
++++ src/unparse.h	23 Apr 2010 23:32:09 -0000
+@@ -104,6 +104,10 @@ typedef enum {
+   psd_skip_command_event = 4096,
+   psd_no_target_attributes = 8192,
+   psd_only_target_attributes = 16384,
++  psd_prefix_identifier = 32768, /* add "_" prefix to declared names */
++  psd_prefix_pdata = 65536,     /* add "_precious_" to precious data */
++  psd_skip_comments = 131072,
++  psd_prefix_section_attribute = 262144,
+ } psd_options;
+ 
+ void prt_type_elements(type_element elements, psd_options options);
+@@ -126,4 +130,8 @@ void prt_function_body(function_decl d);
+ 
+ void prt_diff_info(data_declaration ddecl);
+ 
++bool is_for_mc();
++void set_for_mc();
++void reset_for_mc();
++
+ #endif

@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+"http://www.w3.org/TR/REC-html40/loose.dtd">
+
+<html>
+<head>
+<title>T-Check</title>
+</head>
+<body bgcolor="#FFFFFF">
+
+<center><h1>T-Check: Bug Finding for Sensor Networks</h1></center>
+
+<h2>What's T-Check?</h2>
+
+<p>
+T-Check, settled on TOSSIM as a suitable basis, is designed 
+to stress TinyOS kernel or applications to make these sorts of 
+problems reveal themselves prior to deployment. 
+
+T-Check exploits both explicit
+state model checking and random walks to find bugs in
+sensor network applications running on TinyOS. 
+
+T-Check offers users a good value proposition: by exploiting safety
+checks inserted by Safe TinyOS, users can find bugs without
+any extra annotation effort. 
+
+However, if users provide additional,
+higher level safety and liveness properties, these can
+also be checked. 
+
+User-specified properties may be in terms
+of a single node (e.g., "packets are eventually receive") or in
+terms of the entire network (e.g., "eventually, all nodes are
+part of the routing tree").
+</p>
+
+<p>
+  T-Check builds upon two basis: Safe TinyOS for memory safety, and the 
+TOSSIM simulator. 
+
+Safe TinyOS uses Deputy to guarantee the memory safety of TinyOS applications.
+
+TOSSIM is an event-driven simulator for networks of nodes running TinyOS.
+</p>
+
+<p>
+  Alike TOSSIM, T-Check works on Micaz platform.
+</p>
+
+<h2>Install T-Check</h2>
+  
+  <h3> 1. Install customized nesC compiler</h3>
+   <p>
+   The easiest way is to install our pre-compiled package, which can be download from here:
+  </p>
+  
+  <ul>
+   <li><a href="files/nesc-tcheck.deb">deb</a> tested on Ubuntu</li>
+  </ul>
+  
+
+  <p>
+   Or you can compile from the source by following the steps below (Prefered way):
+  </p>
+
+  <p>
+    <li>(1). download the source code:</li>
+  </p>
+  <pre>
+     cvs -d:pserver:anonymous@nescc.cvs.sourceforge.net:/cvsroot/nescc login
+     cvs -z3 -d:pserver:anonymous@nescc.cvs.sourceforge.net:/cvsroot/nescc co -P nesc
+  </pre>
+     
+  <p>
+    <li>(2). download the <a href="files/nesc-tcheck.patch">patch</a> and</li>
+  </p>
+  
+  <pre>
+   cd nesc
+   patch -p0 < nesc-tcheck.patch
+  </pre>
+
+  <p>
+    <li>(3). then follow the standard make process: bootstrap, configure, make and make install</li>
+  </p>
+
+  <h3>2. Install Deputy compiler</h3>
+  Currently we only provide pre-compiled package:
+  <ul>
+  <li><a href="files/tinyos-deputy.deb">deputy</a> tested on Ubuntu</li>
+  </ul>
+  <p>
+    This pre-compiled package is same with the one included in the standard TinyOS toolchain, if installed that already, 
+    you can skip downloading here. 
+    After the installation, please overwrite the header file checks.h (/usr/lib/deputy/include/deputy) 
+    with this new <a href="files/checks.h">checks.h</a> 
+  </p>
+
+  <h3>3. Patch TinyOS</h3>
+  
+   <p>
+   	<li>download TinyOS from the CVS</li>
+   </p>
+   <pre>
+     cvs -d:pserver:anonymous@tinyos.cvs.sourceforge.net:/cvsroot/tinyos login
+     cvs -z3 -d:pserver:anonymous@tinyos.cvs.sourceforge.net:/cvsroot/tinyos co -P tinyos-2.x
+   </pre>
+  
+   <p>
+   	<li>then download our <a href="files/tcheck-20100709.patch">patch</a> for T-Check</li>
+   </p>
+
+   <pre>
+     cd tinyos-2.x
+     patch -p0 < tcheck-20100709.patch (This patch can fit the latest TinyOS on 2010.07.09)
+   </pre>
+  
+  After preparing the nesC compiler, deputy compiler and T-Check toolchain successfully, the user can start running applications.
+  <h3>4. How to run applications in T-Check? </h3>
+  
+   <h4> 4.1 How to add safety annotation and write high-level properties? </h4>
+    <p>
+     <li>
+     Please refer to <a href="http://ivy.cs.berkeley.edu/ivywiki/uploads/deputy-manual.html">Deputy Manual</a> and 
+     <a href="http://docs.tinyos.net/index.php/Safe_TinyOS">Safe TinyOS</a> to learn how to add safety annotations.
+     Moreover, users may also learn from some T-Check applications with plenty of added annotations, such as
+     CTP, DIP, or 6lowpan.
+     </li>
+    </p>
+    
+    <p>
+    <li>
+     	Please refer to <a href="property.html" target="_blank">here</a> to learn how to wire property 
+     	components into compilation and write executable properties via <a href="files/preprocessing">preprocessing</a> perl script. 
+    </li>
+    </p> 
+   
+   <h4>4.2 How to configure Makefile? </h4>
+    <p>
+     	After adding necessary annotations and writing the high-level properties, users should add some necessary 
+     	<a href="makefileflags.html" target="_bland">flags</a> 
+     	into application Makefile manually to make T-Check execute normally.
+    </p> 
+    
+
+   <h4>4.3 How to write python script? </h4>
+    <p>
+     	Please also refer to <a href="pythonscript.html">here</a> to write python script. 
+    </p>
+    
+   <h4>4.4 How to compile toolchain and run applications?</h4>
+   <p>
+     We made efforts to reduce the cost to develop applications with T-Check. 
+     Basically, the operation on T-Check is similar to that on <a href="http://docs.tinyos.net/index.php/TOSSIM">Tossim</a>.
+     After preparing the python program, users can use following commands to compile the whole T-Check toolchain.
+   </p>  
+   <ul>
+    <li>make micaz (safe) sim</li>
+    <li>make micaz (safe) sim-sf</li>
+    <li>make micaz (safe) sim-fast</li>
+   </ul>
+   <p>
+     <b>safe</b> means the compiling and running in safe mode. 
+     After compilation, users can use "python xxx.py" to drive the T-Check.
+   </p>
+
+   <p>
+  	And download a <a href="files/sample.tar.gz">sample</a> application for MultihopOscilloscope including preprocessor perl script and give a try. 
+   </p>    
+    
+   <p><b>Note that</b> users should set the environment variables according to their own situations</p>
+  
+  <h4>4.5 How to analyze the result?</h4>
+  <p>
+  	During the running, If a T-Check-enabled application encounters a safety violation, it will dump an execution 
+  	trace leading to the violation, and this trace is preserved into a file named "SafetyViolating%d.txt" where %d denotes the number of current path.
+  </p>
+  <ul>
+    <li> In addition, if the safety violation is the memory safety violation triggered by deputy assertion-like checks, 
+    	T-Check will also output the verbose bug information into a file named "BugFile.txt".
+    <li> If the deltaDebugging option is set, then T-Check will automatically shorten the buggy trace and dump it. 
+  </ul>
+
+  <p>
+  	If a liveness violation is found, T-Check searches for the critical transition
+  </p>
+  <ul>
+    <li> If the critical transition is found, then a trace starting from initial state to critical transition will be dumped,
+    <li> Otherwise, the whole trace is dumped to uses to make them inspect the execution.
+These two kinds of traces are both preserved into a file named "LiveViolating%d.txt" where %d denotes the number of current path in the same manner as safety violating file. 
+  </ul>
+  
+</body>
+

@@ -1,0 +1,76 @@
+<html>
+	<body>
+		<h3>Makefile configuration</h3>
+		
+		<p>
+			<li>To make T-Check work, add 
+          <pre>
+          	PFLAGS += -fnesc-mc-state
+          </pre>      
+     into the application Makefile. 
+     <b>Note that</b> this flag is required
+     </li>
+   </p>
+   
+   <p>	
+   	<li>
+     If users want to specify high-level safety or liveness property, add 
+      <pre>
+          CFLAGS += -DSAFETY 
+          CFLAGS += -DLIVENESS 
+          CFLAGS += -D(SYMBOL)
+      </pre>
+      into the application Makefile. 
+      <b>Note that</b> for SAFETY and LIVENESS flags, whether either one or both are 
+      added depends on which kinds of properties to be checked. 
+      (SYMBOL) denotes the [Application symbol] used as the argument of "preprocessing" perl script.
+    </li>
+   </p>
+   
+   <p>	
+   	<li>
+     If users want to activate the hardware part, add 
+      <pre>
+          CFLAGS += -DADCON  (ADC is on)      
+          CFLAGS += -DUARTON  (UART is on)
+          CFLAGS += -DSIM_CC2420 (Byte-level transmission is activated, 
+          but do not recommend to use this option due to its impediment for high-level property checking) 
+      </pre>
+      into the application Makefile. 
+    </li>
+   </p>
+   
+    <p>	
+   	<li>
+     If users want to test applications, which do not contain any communication components, such as 
+     NULL, Blink..., add 
+      <pre>
+         CFLAGS += -DSIM_ASSIST_COMM
+      </pre>
+      into the application Makefile. 
+    </li>
+   </p>
+   
+   <p>	
+   	<li>
+     If users want to test applications, which do not contain any timer components, such as 
+     TestADC..., add 
+      <pre>
+         CFLAGS += -DSIM_ASSIST_TIMER
+      </pre>
+      into the application Makefile. 
+    </li>
+   </p>
+   
+   <p>
+   	<li>
+   	 If you want to test TestFtsp application, please add 
+   	  <pre>
+         CFLAGS += -DTIMESYNC
+      </pre>
+     into the application Makefile.
+     <b>Note that</b> this is a special case. 
+    </li>
+   </p>
+	</body>
+</html>

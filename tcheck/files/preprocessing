@@ -1,0 +1,779 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+sub exists_symbol_in_simpropertycheck; 
+sub handle_property_file; 
+sub component_is_generic;
+sub configurations_are_generic;
+sub intercept_component_name;
+sub propertyConfig_insert;
+sub propertyModule_insert;
+sub configuration_insert;
+sub configuration_set_insert;
+sub module_insert;
+sub module_set_insert;
+
+sub preprocess_files_copy;
+sub preprocess_files_copyback;
+sub preprocess_bak_files_delete;
+sub can_not_open_file;
+
+my $script = basename $0;
+if($#ARGV != 1) {
+   my $usage = "Missing some arguments, usage: ./$script [Application symbol] [A file containing the pairs of the non-generic configration and module]\nEach line in the file is composed of pair of <Non-generic configration dir> <Module dir>\n";
+   die $usage;
+}
+
+my $symbol = $ARGV[0]; # This variable is really important, it must not be used for instrumentation before...
+my $propertyFile = $ARGV[1];
+# Make sure the environment variable is set correctly...
+my $tosdir = $ENV{TOSDIR};
+die "Miss defining ENVIRONMENT variables!\n" unless defined $tosdir;
+my $propertyConfig_path = $tosdir . "/lib/tossim/SimPropertyCheckC.nc";
+my $propertyConfig_path_bak = $propertyConfig_path . ".bak";
+my $propertyModule_path = $tosdir . "/lib/tossim/SimPropertyCheckP.nc";
+my $propertyModule_path_bak = $propertyModule_path . ".bak";
+my $propertyModuleMaster_path = $tosdir . "/lib/tossim/SimPropertyCheckP-Master.nc";
+
+my @config_path;
+my @config_path_bak;
+my @module_path;
+my @module_path_bak;
+my @config_name;
+my @module_name;
+handle_property_file(); # processing the files listed in property files.
+my $wiringRelation = $#config_path; # this variable must be set after the handle function...
+
+my $mode;
+print "You want to [E]dit, (R)ecover or (D)elete: ";
+$mode = <STDIN>;;
+chomp($mode);
+
+if($mode eq "R") {
+  preprocess_files_copyback();
+  exit;
+}
+elsif($mode eq "D") {
+  preprocess_bak_files_delete();
+  exit;
+}
+
+my $commentBlock = 0;  
+# Check whether there exists $symbol in SimPropertyCheckC.nc...
+my $symbolExists = exists_symbol_in_simpropertycheck(); 
+die "There exists $symbol in property configuration $propertyConfig_path!\n" unless $symbolExists == 0;
+
+# Check whether the corresponding configurations are generic or not.. 
+configurations_are_generic();
+
+# The main procedure for preprocessing files...
+# 1. backup the original property components, configurations, and modules...
+preprocess_files_copy();
+# 2. preprocess the property component, configuration and module step by step...
+propertyConfig_insert();
+propertyModule_insert();
+configuration_set_insert();
+module_set_insert();
+# 3. preprocess the property component, configuration and module step by step...
+#preprocess_bak_files_delete();
+
+# To check whether a line is comment, include, or blank line..
+
+sub line_comment_include_blank {
+   my ($line) = @_;
+   my $other = 0;
+
+   if($commentBlock == 1) { # in the body of comment block, everything belongs to comment...
+     if($line =~ /.*\*\/\s*$/) { # the end of comment block...
+       $commentBlock = 0;
+     }
+     $other = 1;
+   }
+   else {
+     if($line =~ /^\s*#include.*/) {
+       $other = 1;
+     }
+     elsif($line =~ /^\s*$/) {
+       $other = 1;
+     }
+     elsif($line =~ /^\s*\/\*.*/) { #start of comment block. e.g., /*, /** 
+       $commentBlock = 1;
+       if($line =~ /.*\*\/\s*$/){ # the end of comment block in the same line...
+         $commentBlock = 0;
+       }
+       $other = 1;
+     }
+     elsif($line =~ /^\s*\/\/.*/) { # // comment...
+       $other = 1;
+     }
+     else {
+       # All other cases are code lines... 
+     }
+   }
+   return $other;
+}
+
+# To check whether there exists same symbol in SimPropertyCheckC.nc
+sub exists_symbol_in_simpropertycheck {
+   open PROPERTYCONFIG, "<", "$propertyConfig_path", or die "Can not open $propertyConfig_path!\n";
+   my $line;
+   my $exists = 0;
+
+   while ($line = readline(PROPERTYCONFIG)) {
+     my $comment = line_comment_include_blank($line);
+     if($comment == 0) {
+        if($line =~ /.*$symbol.*/){
+	  $exists = 1;
+	  last;
+	}
+     }
+   }
+   close PROPERTYCONFIG;
+   return $exists;
+}
+
+sub handle_property_file {
+   open PROPERTYFILE, "<", "$propertyFile", or die "Can not open $propertyFile!\n";
+   my $line;
+   my $tosroot = $ENV{TOSROOT};
+   die "Miss defining ENVIRONMENT variables TOSROOT!\n" unless defined $tosroot;
+
+   while ($line = readline(PROPERTYFILE)) {
+     my @splitDir = split(/\s+/, $line);
+     my $configPath = $tosroot . "/" . $splitDir[0];
+     my $configPathBak = $configPath . ".bak";
+     my $configName = intercept_component_name($configPath);
+     my $modulePath = $tosroot . "/" . $splitDir[1];
+     my $modulePathBak = $modulePath . ".bak";
+     my $moduleName = intercept_component_name($modulePath);
+
+     @config_path = (@config_path, $configPath);  
+     @config_path_bak = (@config_path_bak, $configPathBak);  
+     @config_name = (@config_name, $configName);
+     @module_path = (@module_path, $modulePath);  
+     @module_path_bak = (@module_path_bak, $modulePathBak);  
+     @module_name = (@module_name, $moduleName);
+   }
+   close PROPERTYFILE;
+}
+  
+# To check whether the configuraion is generic or not..
+sub component_is_generic {
+  my ($component) = @_;
+  open COMPONENT, "<", "$component", or die "Can not open $component!\n";
+  my $line;
+  my $generic = 0;
+
+  while ($line = readline(COMPONENT)) {
+     my $comment = line_comment_include_blank($line);
+     if($comment == 0) {
+        if($line =~ /.*generic.*/){
+	  $generic = 1;
+	  close COMPONENT;
+	  return $generic;
+	}
+     }
+  }
+  close COMPONENT;
+  return $generic;
+}
+
+sub configurations_are_generic {
+   foreach (@config_path) {
+     my $is_generic = component_is_generic($_);
+     die "The configuration $_ is NOT the non-generic configuration!\n" unless $is_generic == 0;
+   }
+}
+
+# To intercept the component name from whole path...
+sub intercept_component_name {
+  my ($componentPath) = @_;
+  my @splitDir = split(/\//, $componentPath);
+  my @splitName = split(/\./, $splitDir[$#splitDir]);
+  return $splitName[0];
+}
+
+sub config_name_in_set {
+  my ($configName, @configSet) = @_;
+  my $inSet = 0;
+  foreach (@configSet) {
+     if($configName eq $_) {
+        $inSet = 1;
+	last;
+     }
+  }
+  return $inSet;
+}
+
+sub propertyConfig_insert {
+  open PROPERTYCONFIG, "<", "$propertyConfig_path", or can_not_open_file($propertyConfig_path);
+  my @propertylines = <PROPERTYCONFIG>;
+  close PROPERTYCONFIG;
+
+  my $line;
+  my $bracketNum = 0;
+  my $propertyP = 0;
+  my @configSet;
+  open PROPERTYCONFIG, "+>", "$propertyConfig_path", or can_not_open_file($propertyConfig_path);
+
+  foreach $line (@propertylines){
+     my $comment = line_comment_include_blank($line); 
+     if($comment == 1) {
+        print PROPERTYCONFIG $line;
+     }
+     else {
+       if($line =~ /.*\}.*/){
+         $bracketNum++;
+         if($bracketNum == 2) { 
+	   #here, implicitly this curly bracket is the one for implementation body...
+	   print PROPERTYCONFIG "\n";
+	   if($propertyP == 0){
+	      print PROPERTYCONFIG "   components SimPropertyCheckP;\n";
+	   }
+           print PROPERTYCONFIG "#ifdef $symbol\n";
+	   for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+	     if(config_name_in_set($config_name[$i-1], @configSet) == 0) {
+               print PROPERTYCONFIG "   components $config_name[$i-1];\n";
+	       @configSet = (@configSet, $config_name[$i-1]);
+	     }
+             print PROPERTYCONFIG "   SimPropertyCheckP.Property$i -> $config_name[$i-1].Property$i;\n";
+	   }
+           print PROPERTYCONFIG "#endif\n";
+	   print PROPERTYCONFIG "}\n"; #Do not forget to make up this symbol..
+         }
+         else {
+           print PROPERTYCONFIG $line;
+         }
+       }
+       else {
+	 if($line =~ /.*SimPropertyCheckP.*/){
+	   $propertyP = 1;
+	 }
+         print PROPERTYCONFIG $line; 
+       }
+     }
+  }
+  close PROPERTYCONFIG;
+}
+
+sub propertyModule_insert {
+  open PROPERTYMODULEMASTER, "<", "$propertyModuleMaster_path", or can_not_open_file($propertyModuleMaster_path);
+  open PROPERTYMODULE, "+>", "$propertyModule_path", or can_not_open_file($propertyModule_path);
+ 
+  my $masterline;
+  while ($masterline = readline(PROPERTYMODULEMASTER)) {
+     if($masterline =~ /.*INTERFACE.*/) {
+        for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+	   print PROPERTYMODULE "   uses interface SimProperty as Property$i;\n"; 
+	}
+     }
+     elsif($masterline =~ /.*SAFETY.*/) {
+        for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+	   print PROPERTYMODULE "      safetySatisfied = call Property$i.safetyPropertyCheck();\n"; 
+	   print PROPERTYMODULE "      sim_specified_safety_checking(safetySatisfied, safetyCount++);\n"; 
+	   print PROPERTYMODULE "\n";
+	}
+     }
+     elsif($masterline =~ /.*LIVENESS.*/) {
+        for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+	   print PROPERTYMODULE "      if(sim_property_should_be_checked(liveCount++)) {\n";
+	   print PROPERTYMODULE "        liveSatisfied = call Property$i.livenessPropertyCheck();\n"; 
+	   print PROPERTYMODULE "        sim_specified_liveness_checking(liveSatisfied, liveCount);\n"; 
+	   print PROPERTYMODULE "      }\n";
+	   print PROPERTYMODULE "\n";
+	}
+     }
+     else {
+        print PROPERTYMODULE $masterline;
+     }
+  }
+  close PROPERTYMODULEMASTER;
+  close PROPERTYMODULE;
+}
+
+sub preprocess_non_comment_line {
+  my ($line) = @_;
+
+  if($line =~ /(\/\/|\/\*).*/){
+    $line = $`; 
+  }
+  return $line;
+}
+
+# To obtain the alias of the corresponding module name in a configration.
+# For example, some modules will be renamed via "as" keywords. 
+sub handle_component_line_in_config {
+  my ($line, $moduleName) = @_;
+
+  my $partline = preprocess_non_comment_line($line);
+  if($partline =~ /.*$moduleName.*/) {
+    if($partline =~ /$moduleName.*\s+as/){
+       my $right = $';
+       my @splitRight = split(/(,|;)/, $right);
+       return $splitRight[0]; 
+    }
+    return $moduleName;
+  }
+  return "NULL";
+}
+
+# To add the wiring code into the configuration..
+sub output_provides_lines {
+  my ($configName) = @_;
+  my $lines = "#ifdef $symbol\n"; 
+  for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+     if($config_name[$i-1] eq $configName) {
+        $lines = $lines . "\tprovides interface SimProperty as Property$i;\n"; 
+     }
+  }
+  $lines = $lines . "#endif\n";
+  return $lines;
+}
+
+sub output_provides_other_lines {
+  my ($configName) = @_;
+  my $lines = "#ifdef $symbol\n"; 
+  for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+     if($config_name[$i-1] eq $configName) {
+        $lines = $lines . "\tinterface SimProperty as Property$i;\n"; 
+     }
+  }
+  $lines = $lines . "#endif\n";
+  return $lines;
+}
+
+sub output_export_module {
+  my $lines = "#ifdef $symbol\n";
+  my ($configName, $aliasName, $moduleName) = @_;
+  for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+     if(($config_name[$i-1] eq $configName) && ($module_name[$i-1] eq $moduleName)) {
+         $lines = $lines . "\tProperty$i = $aliasName.Property$i;\n"; 
+     }
+  }
+  $lines = $lines . "#endif\n";
+  return $lines;
+}
+
+sub configuration_insert {
+  my ($configPath, $configName, @moduleSet) = @_;
+  open CONFIGFILE, "<", "$configPath", or can_not_open_file($configPath);
+  my @configlines = <CONFIGFILE>;
+  close CONFIGFILE;
+
+  my $line;
+  my $providesExist = 0;
+  my $providesAdd = 0;
+  my $providesBracketSet = 0;
+
+  my $usesExist = 0;
+  my $configStart = 0;
+  # To check whether there exists "provides" part ... 
+  foreach $line (@configlines) {
+     my $comment = line_comment_include_blank($line); 
+     if($comment == 0) {
+	my $partline = preprocess_non_comment_line($line); 
+	if($partline =~ /^\s*configuration\s+/) {
+	   $configStart = 1;
+	}
+	elsif($partline =~ /\s*implementation\s*/) {
+	   $configStart = 0;
+	}
+	else {
+	  if($configStart == 1) {
+	     if($partline =~ /^\s*provides\s+/) {
+	       $providesExist = 1;
+	     }
+	     if($partline =~ /^\s*uses\s+/) {
+	       $usesExist = 1;
+	     }
+	     if($partline =~ /\s*$symbol\s*/) {
+	       $providesAdd = 1;
+	     }
+	  }
+	}
+     }
+  }
+
+  my $componentSet = 0;
+  my @aliasName;
+
+  my $providesLines;
+  my $providesOtherLines;
+
+  open CONFIGFILE, "+>", "$configPath", or can_not_open_file($configPath);
+  foreach $line (@configlines) {
+     my $comment = line_comment_include_blank($line); 
+     if($comment == 1) {
+        print CONFIGFILE $line;
+     }
+     else {
+	my $partline = preprocess_non_comment_line($line); 
+	# Try to locate the provides keyword
+        if($partline =~ /^\s*provides\s+.*/ && $providesAdd == 0) { #implicitly providesExist is 1..
+          print CONFIGFILE $line;
+          if($partline =~ /^\s*provides\s+interface.*/) {
+	    $providesLines = output_provides_lines($configName); 
+	    print CONFIGFILE $providesLines;
+            $providesAdd = 1;
+          }
+          else {
+            $providesBracketSet = 1;
+          }
+        }
+        elsif(($partline =~ /^\s*components\s+.*/ || $componentSet == 1) && $#moduleSet != -1) {
+          print CONFIGFILE $line; # Dump the line code...
+          $componentSet = 1;	
+
+	  for(my $i = 0; $i <= $#moduleSet; $i++) {
+             $aliasName[$i] = "NULL"; 
+             my $otherName = handle_component_line_in_config($partline, $moduleSet[$i]);
+             $aliasName[$i] = $otherName unless $otherName eq "NULL";
+	  }
+
+          if($partline =~ /.*;.*/) {
+             $componentSet = 0;
+	     my $length = $#moduleSet;
+	     for(my $i = 0; $i <= $length; $i++) {
+               if($aliasName[$i] ne "NULL") {
+                 print CONFIGFILE "\n"; 
+		 my $exportLine = output_export_module($configName, $aliasName[$i], $moduleSet[$i]);
+                 print CONFIGFILE $exportLine; 
+                 splice @moduleSet, $i, 1; 
+               }
+	     }
+          }
+        }
+        else {
+	  if($providesExist == 0) { # If there is no provides part in configuration
+	    if($usesExist == 1) {
+	       if($partline =~ /^\s*uses\s*.*/) {
+	         $providesLines = output_provides_lines($configName); 
+	         print CONFIGFILE $providesLines;
+		 $providesExist = 1;
+                 $providesAdd = 1;
+	       }
+	       print CONFIGFILE $line;
+	    }
+	    else {
+	       if($partline =~ /configuration.*\{\s*\}/) {
+                 my @splitPartLine = split(/\}/, $partline);
+		 print CONFIGFILE "$splitPartLine[0]\n";
+	         $providesLines = output_provides_lines($configName); 
+	         print CONFIGFILE $providesLines;
+		 print CONFIGFILE "\}\n";
+		 $providesExist = 1;
+                 $providesAdd = 1;
+	       }
+	       elsif($partline =~ /^\s*\}.*/) {
+	         $providesLines = output_provides_lines($configName); 
+	         print CONFIGFILE $providesLines;
+	         print CONFIGFILE $line;
+		 $providesExist = 1;
+                 $providesAdd = 1;
+	       }
+	       else {
+	         print CONFIGFILE $line;
+	       }
+	    }
+	  }
+          elsif($partline =~ /\}/ && $providesBracketSet == 1) {
+	    my $leftPartLine = $`;
+	    my $rightPartLine = $';
+            if($partline =~ /^\s*\}.*/){
+	      $providesOtherLines = output_provides_other_lines($configName); 
+	      print CONFIGFILE $providesOtherLines;
+	      print CONFIGFILE $line;
+	    }
+	    else {
+	      print CONFIGFILE $leftPartLine; 
+	      $providesOtherLines = output_provides_other_lines($configName); 
+	      print CONFIGFILE $providesOtherLines;
+	      print CONFIGFILE "\t\}" . $rightPartLine;
+	    }
+	    $providesBracketSet = 0;
+            $providesAdd = 1;
+          } 
+          else {
+            print CONFIGFILE $line; # Dump the line code...
+          }
+        }
+     }
+  }
+  close CONFIGFILE;
+}
+
+sub configuration_set_insert {
+   my @configSet = ();
+   my @moduleSet = ();
+
+   for(my $i = 0; $i <= $wiringRelation; $i++) {
+     if(config_name_in_set($config_name[$i], @configSet) == 0) { 
+       for(my $j = $i; $j <= $wiringRelation; $j++) {
+	  if(($config_name[$i] eq $config_name[$j]) && config_name_in_set($module_name[$j], @moduleSet) == 0) {
+	     @moduleSet = (@moduleSet, $module_name[$j]);
+	  }
+       }
+       configuration_insert($config_path[$i], $config_name[$i], @moduleSet); 
+       @configSet = (@configSet, $config_name[$i]);
+     }
+     @moduleSet = ();
+   }
+}
+
+sub output_module_provides_lines {
+  my ($moduleName) = @_;
+  my $lines = "#ifdef $symbol\n"; 
+  for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+     if($module_name[$i-1] eq $moduleName) {
+        $lines = $lines . "\tprovides interface SimProperty as Property$i;\n"; 
+     }
+  }
+  $lines = $lines . "#endif\n";
+  return $lines;
+}
+
+sub output_module_provides_other_lines {
+  my ($moduleName) = @_;
+  my $lines = "#ifdef $symbol\n"; 
+  for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+     if($module_name[$i-1] eq $moduleName) {
+        $lines = $lines . "\tinterface SimProperty as Property$i;\n"; 
+     }
+  }
+  $lines = $lines . "#endif\n";
+  return $lines;
+}
+
+sub output_property_body {
+  my ($moduleName) = @_;
+  my $lines = "#ifdef $symbol\n";
+  for(my $i = 1; $i <= $wiringRelation+1; $i++) {
+     if($module_name[$i-1] eq $moduleName) {
+        $lines = $lines . "\tcommand bool Property$i.safetyPropertyCheck() \{\n";
+        $lines = $lines . "\t   return TRUE;\n";
+        $lines = $lines . "\t\}\n"; 
+        $lines = $lines . "\tcommand bool Property$i.livenessPropertyCheck() \{\n";
+        $lines = $lines . "\t   return TRUE;\n";
+        $lines = $lines . "\t\}\n"; 
+     }
+  }
+  $lines = $lines . "#endif\n"; 
+  return $lines;
+}
+
+sub module_insert {
+  my ($modulePath, $moduleName) = @_;
+  open MODULEFILE, "<", "$modulePath", or can_not_open_file($modulePath);
+  my @modulelines = <MODULEFILE>;
+  close MODULEFILE;
+
+  my $line;
+  my $providesExist = 0;
+  my $usesExist = 0;
+  my $lastBracketPos = 0;
+  my $posNum = 0;
+
+  # To check whether there exists "provides" part ... 
+  foreach $line (@modulelines) {
+     my $comment = line_comment_include_blank($line); 
+     $posNum++;
+     if($comment == 0) {
+	my $partline = preprocess_non_comment_line($line); 
+	if($partline =~ /^\s*provides\s+/) {
+	   $providesExist = 1; 
+	}
+	if($partline =~ /^\s*uses\s+/) {
+	   $usesExist = 1;
+	}
+	if($partline =~ /.*\}.*/) {
+	   $lastBracketPos = $posNum; 
+	}
+     }
+  }
+
+  my $providesAdd = 0;
+  my $providesBracketSet = 0;
+
+  my $providesLines;
+  my $providesOtherLines;
+  my $moduleProperties;
+
+  $posNum = 0;
+  open MODULEFILE, "+>", "$modulePath", or can_not_open_file($modulePath);
+  foreach $line (@modulelines) {
+     my $comment = line_comment_include_blank($line); 
+     $posNum++;
+     if($comment == 1) {
+       print MODULEFILE $line;
+     }
+     else {
+	my $partline = preprocess_non_comment_line($line); 
+	# Try to locate the provides keyword
+        if($partline =~ /^\s*provides.*/ && $providesAdd == 0) {
+          print MODULEFILE $line;
+          if($partline =~ /^\s*provides\s+interface.*/) {
+	    $providesLines = output_module_provides_lines($moduleName); 
+	    print MODULEFILE $providesLines;
+            $providesAdd = 1;
+          }
+	  else {
+            $providesBracketSet = 1;
+	  }
+	}
+	else {
+	  if($providesExist == 0) {
+	    if($usesExist == 1) {
+	       if($line =~ /^\s*uses\s*.*/) {
+	         $providesLines = output_module_provides_lines($moduleName); 
+	         print MODULEFILE $providesLines;
+		 $providesExist = 1;
+                 $providesAdd = 1;
+	       }
+	       print MODULEFILE $line;
+	    }
+	    else {
+	       if($partline =~ /module.*\{\s*\}/) {
+                 my @splitPartLine = split(/\}/, $partline);
+		 print MODULEFILE "$splitPartLine[0]\n";
+	         $providesLines = output_module_provides_lines($moduleName); 
+	         print MODULEFILE $providesLines;
+		 print MODULEFILE "\}\n";
+		 $providesExist = 1;
+                 $providesAdd = 1;
+	       }
+	       elsif($partline =~ /^\s*\}.*/) {
+	         $providesLines = output_module_provides_lines($moduleName); 
+	         print MODULEFILE $providesLines;
+	         print MODULEFILE $line;
+		 $providesExist = 1;
+                 $providesAdd = 1;
+	       }
+	       else {
+	         print CONFIGFILE $line;
+	       }
+	    }
+	  }
+          elsif($partline =~ /\}.*/ && $providesBracketSet == 1) {
+	    my $leftPartLine = $`;
+            if($partline =~ /^\s*\}.*/) {
+	      $providesOtherLines = output_module_provides_other_lines($moduleName); 
+	      print MODULEFILE $providesOtherLines;
+	      print MODULEFILE $line;
+	    }
+	    else {
+	      print MODULEFILE $leftPartLine; 
+	      $providesOtherLines = output_module_provides_other_lines($moduleName); 
+	      print MODULEFILE $providesOtherLines;
+	      print MODULEFILE "\t\}\n";
+	    }
+	    $providesBracketSet = 0;
+            $providesAdd = 1;
+	  }
+          else {
+	    if($lastBracketPos eq $posNum) {
+	      $moduleProperties = output_property_body($moduleName);
+	      print MODULEFILE $moduleProperties;
+              print MODULEFILE $line; # Dump "}"...
+            }
+	    else {
+              print MODULEFILE $line; # Dump the line code...
+	    }
+          }
+	}
+     }
+  }
+  close MODULEFILE;
+}
+
+sub module_set_insert {
+  my @moduleSet;
+
+  for(my $i = 0; $i <= $wiringRelation; $i++) {
+    if(config_name_in_set($module_name[$i], @moduleSet) == 0) {
+      module_insert($module_path[$i], $module_name[$i]);       
+      @moduleSet = (@moduleSet, $module_name[$i]);
+    }
+  }
+}
+
+sub preprocess_files_copy {
+  `cp $propertyConfig_path $propertyConfig_path_bak`;  
+  `cp $propertyModule_path $propertyModule_path_bak`;  
+  for(my $i = 0; $i <= $wiringRelation; $i++) {
+    `cp $config_path[$i] $config_path_bak[$i]`;  
+    `cp $module_path[$i] $module_path_bak[$i]`;  
+  }
+}
+
+sub preprocess_files_copyback {
+  if(-e $propertyConfig_path_bak) {
+    `cp $propertyConfig_path_bak $propertyConfig_path`;  
+  }
+  else {
+    print "backup file $propertyConfig_path_bak not found, users can use Recover functionality before editing!\n";
+  }
+
+  if(-e $propertyModule_path_bak) {
+    `cp $propertyModule_path_bak $propertyModule_path`;  
+  }
+  else {
+    print "backup file $propertyModule_path_bak not found!\n"
+  }
+
+  for(my $i = 0; $i <= $wiringRelation; $i++) {
+    if(-e $config_path_bak[$i]) {
+      `cp $config_path_bak[$i] $config_path[$i]`;  
+    }
+    else {
+      print "backup file $config_path_bak[$i] not found!\n";
+    }
+
+    if(-e $module_path_bak[$i]) {
+      `cp $module_path_bak[$i] $module_path[$i]`;  
+    }
+    else {
+      print "backup file $module_path_bak[$i] not found!\n";
+    }
+  }
+}
+
+sub preprocess_bak_files_delete {
+  if(-e $propertyConfig_path_bak) {
+    `rm $propertyConfig_path_bak`;  
+  }
+  else {
+    print "backup file $propertyConfig_path_bak not found, users can use Delete functionality before editing!\n";
+  }
+
+  if(-e $propertyModule_path_bak) {
+    `rm $propertyModule_path_bak`;  
+  }
+  else {
+    print "backup file $propertyModule_path_bak not found!\n"
+  }
+
+  for(my $i = 0; $i <= $wiringRelation; $i++) {
+    if(-e $config_path_bak[$i]) {
+      `rm $config_path_bak[$i]`;  
+    }
+    else {
+      print "backup file $config_path_bak[$i] not found!\n";
+    }
+
+    if(-e $module_path_bak[$i]) {
+      `rm $module_path_bak[$i]`;  
+    }
+    else {
+      print "backup file $module_path_bak[$i] not found!\n";
+    }
+  }
+}
+
+sub can_not_open_file {
+  my ($fileName) = @_;
+  preprocess_files_copyback();
+  die "Can not open $fileName, the whole instrumentation is disturbed, then restore all changed files to original!\n";
+}

@@ -1,0 +1,213 @@
+<html>
+	<body>
+	<h3>1 User-specified properties wiring and writing</h3>
+	<p>
+		If a developer wishes to specify high-level properties, these take the form of nesC components providing 
+		the <i>SimProperty</i> interface, which has two commands: <i>safetyPropertyCheck</i> and <i>livenessPropertyCheck</i>, 
+		currently, T-Check can check multiple properties simultaneously. 
+		And the auxiliary "preprocessing" perl script can be applied to automatically wire property 
+		components into the application.
+	</p>
+	<h4> 1.1 How to use preprocessing scrip? </h4>
+	Users may use the following instruction to automatically instrument some snippets of code.
+	
+  <p>./preprocessing [Application symbol] [A file containing the pairs of non-generic configuration and module]</p>
+  <p>
+  	<li>
+  	[Application symbol] - Large-case symbol never used before in <i>SimPropertyCheckC.nc</i> component under the dir $TOSDIR/lib/tossim.
+  	If used, then the script will halt the running and warn the users that they should pick a new symbol name.
+    </li>
+  	
+  	<li>
+    [A file containing pairs of configuration and module] - Each line in the file is composed of a pair 
+  of <Non-generic configration dir> <Module dir>, <b>Note that</b> these two dirs must be expressed as a relative 
+    dir which uses $TOSROOT as reference.
+    </li>
+  </p>
+  
+  <p>
+   Taking <i>MultihopOscilloscope</i> as example, users can use following command to automatically instrument code.
+  </p>
+  <p>
+   ./preprocessing CTPPROPERTY <a href = "files/propertyWiring.txt">propertyWiring.txt<a>
+  </p>
+  
+  <p>It is better to express the symbol name in a large case way, and the number of configuration and module pairs 
+  in the propertyWiring.txt specifies the number of properties users want to provide</p>
+  
+  <p>At the beginning, the script asks users to choose one from three options</P>
+  <p>
+  	<li>
+  		Edit. 
+  		If users never use the script to instrument the property-related code before, they should
+  		choose this option. 
+  		Besides instrumenting necessary code into corresponding components, then script also implicitly backs up 
+  		the modified components, i.e., suppose some code are automatically added into a component named "xxx.nc", then
+  		the original component file will be copied into a newly created file named "xxx.nc.bak".
+  	</li>
+  	
+  	<li>
+  		Recover.
+  		As the name suggests, users can employ this option to recover the modified components to their original
+  		states.
+  	</li>
+  	
+  	<li>
+  		Delete.
+  		If the users are satisfied with the instrumentation, then they can delete those backup files safely.
+  	</li>
+  </p>
+  
+  <p>After running this command</p>
+  
+  <p>
+  	<li> 
+  		(1) First, the following code will be instrumented into implementation part of <b>SimPropertyCheckC.nc</b> 
+  	</li>
+  </p>
+  
+  <pre>
+    #ifdef CTPPROPERTY   
+       components CtpP;
+       SimPropertyCheckP.Property1 -> CtpP.Property1;
+       SimPropertyCheckP.Property2 -> CtpP.Property2;
+    #endif
+  </pre>
+  
+  <p>
+  	<li>
+  		(2) Then, the SimPropertyCheckP.nc will be established upon the SimPropertyCheckP-Master.nc file and number of properties 
+  		users want to specify. 
+  	</li> 
+  </p>
+  
+  <p> The following code will be added as uses parts, n denotes the number of property.</p>
+  <pre>
+    uses interface SimProperty as Property1;
+  	 ...
+  	uses interface SimProperty as Propertyn;
+  </pre>
+  
+  <p> The relatively complex code will be added into implementation part of SimPropertyCheckP.nc, and we will not show the concrete code
+  here </p>
+  
+  <p>
+  	<li>
+  		(3)	The following two snippets will be inserted into the <b>provides</b> part 
+  		and <b>implementation</b> part of <b>CtpP.nc</b> respectively
+  	</li>
+  </p>
+  	
+  <pre> 	
+    #ifdef CTPPROPERTY
+        interface SimProperty as Property1;
+        interface SimProperty as Property2;
+    #endif 
+  </pre>
+  <pre> 	
+    #ifdef CTPPROPERTY
+        Property1 = Router.Property1; //"Router" is the alias of generic module "CtpRoutingEngineP.nc"
+        Property2 = Router.Property2;
+    #endif 
+  </pre>
+  
+  <p>
+  	<li>
+  		(4)	At last, following two snippets will be inserted into the <b>provides</b> part 
+  		and <b>implementation</b> part of <b>CtpRoutingEngineP.nc</b>
+  	</li>
+  </p>
+  
+  <pre> 	
+    #ifdef CTPPROPERTY
+        interface SimProperty as Property1;
+        interface SimProperty as Property2;
+    #endif
+  </pre>
+  
+  <pre> 	
+    #ifdef CTPPROPERTY
+      command bool Property1.safetyPropertyCheck() {
+        return TRUE;
+      }
+      command bool Property1.livenessPropertyCheck() {
+        return TRUE;
+      }
+      
+      command bool Property2.safetyPropertyCheck() {
+        return TRUE;
+      }
+      command bool Property2.livenessPropertyCheck() {
+        return TRUE;
+      }
+    #endif
+  </pre>
+  
+  <p>
+  	<li>
+  		(5)	At last, since T-Check concentrates on real-code checking, 
+  		users should fill <i>safetyPropertyCheck</i> and <i>livenessPropertyCheck</i> 
+  		with executable code, which is written upon variables defined in corresponding modules.
+  		<b>Note</b> that if the corresponding property is satisfied, then return <b>TRUE</b>; 
+  		otherwise, return <b>FALSE</b>.  
+  	</li>
+  </p>
+  
+  <h4> 1.2 How to write the properties? </h4>
+    <p>
+    	Users may refer to <a href="propertyexamples.html" target="_blank">property examples</a> which were all expressed
+      in executable manner and checked by T-Check.
+    </p>
+    
+    <p> The property for single node application should be expressed like below: </p> 
+    <pre>
+      command bool SimProperty.livenessPropertyCheck() {
+        return !receiveState.bufZeroLocked && !receiveState.bufOneLocked;
+      }
+    </pre>
+    
+    <p>
+    	The property for multiple nodes application can be written via following two modes: 
+    </p>
+    <p>(1). Sample liveness property for multi-nodes CTP with all motes' number starting from 0 and <b>continuous</b>  
+    </p>
+    <pre>
+    	command bool SimProperty.livenessPropertyCheck() {
+        int tmpMote = sim_node(), mote;
+        for (mote = 0; mote < sim_simulated_mote_num(); mote++) {
+           sim_set_node (mote);   //change to mote¡¯s context
+           if (sim_mote_forms_loop (mote)) {
+             sim_set_node (tmpMote);
+             return FALSE;
+           }
+        }
+        sim_set_node (tmpMote);
+        return TRUE;
+      }
+    </pre>
+
+    <p>(2). Sample liveness property for multi-nodes CTP with all mote's number starting from 0 but <b>non-continuous</b>
+    </p>
+    <pre>
+    	command bool SimProperty.livenessPropertyCheck() {
+        int tmpMote = sim_node(), mote;
+        for (mote = 0; mote < sim_max_mote_num(); mote++) {
+          if(sim_mote_status(mote) == ON) {
+            sim_set_node (mote);  //change to mote¡¯s context
+            if(sim_mote_forms_loop (mote)) {
+               sim_set_node (tmpMote);
+               return FALSE;
+            }
+          }
+        }
+        sim_set_node (tmpMote);
+        return TRUE;
+      }
+    </pre>
+    
+    <p>The main difference between above two modes concentrates on whether the mote's number is continuous or not. 
+    	<b>Note that</b> sim_set_node(mote) function is critical for changing current context to specific mote's context.
+    </p>
+
+	</body>
+</html>

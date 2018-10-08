@@ -1,0 +1,427 @@
+<html>
+	<body>
+		<h3>Property examples</h3>
+		<p>
+			<li> Serial Stack </li>
+   </p>
+   
+   <pre>
+   	 ./preprocessing SERIALSTACKPROPERTY propertyWiring.txt
+  </pre>
+   <pre>
+    command bool Property1.safetyPropertyCheck() {
+      //printf("Since we have verified a safety violation, here we should find more about the liveness violation!\n");
+      bool safetyPass = TRUE;
+
+      if(receiveState.which) {
+        //current buffer is 1, and test the status of buffer 1...
+        if(!receiveState.bufOneLocked) {
+           if(startPacket == TRUE) {
+              if(receiveState.state == RECV_STATE_IDLE)
+                 safetyPass = FALSE;
+              startPacket = FALSE;
+           }
+        }
+        else
+           startPacket = FALSE;
+      }
+      else {
+        //current buffer is 0, and test the status of buffer 0...
+        if(!receiveState.bufZeroLocked) {
+           if(startPacket == TRUE) {
+              if(receiveState.state == RECV_STATE_IDLE)
+                  safetyPass = FALSE;
+              startPacket = FALSE;
+           }
+        }
+        else
+           startPacket = FALSE;
+      }
+      return safetyPass;
+    }
+
+    command bool Property1.livenessPropertyCheck() {
+      return !receiveState.bufZeroLocked && !receiveState.bufOneLocked;
+    }
+  </pre>
+  
+   <p>
+			<li> MultihopOscilloscope </li>
+   </p>
+  
+  <pre>
+   	 ./preprocessing CTPPROPERTY propertyWiring.txt
+  </pre>
+  
+  <pre>  		
+    bool sim_is_all_motes_on() {
+        int i;
+	     int onNum = 0;
+
+	for(i = 0 ; i < sim_max_mote_num(); i++) {
+	   if(sim_mote_status(i) == ON)
+	      onNum++;
+	}
+	if(onNum == sim_simulated_mote_num())
+	   return TRUE;
+	else
+	   return FALSE;
+    }
+
+    // The first liveness property...
+    bool sim_mote_is_root(int mote) {
+       bool is_root;
+       unsigned long tmpMote = sim_node();
+       sim_set_node(mote);
+       is_root = state_is_root; 
+       sim_set_node(tmpMote);
+       return is_root;
+    }
+
+    // If TRUE, loop exists;
+    // Otherwise, no loop forms
+    bool sim_mote_form_loop(int mote) {
+       if(sim_mote_is_root(mote)) {
+          return FALSE; 
+       }
+       else {
+          bool loopForming = FALSE;
+          unsigned long srcMote = mote; // Record the source mote;
+
+          while(TRUE) {
+             sim_set_node(srcMote);
+
+             if(sim_mote_is_root(routeInfo.parent)) {
+	         // Means that the parent is root, no loop forms...
+		 break;
+	     }
+             else { 
+	       if(routeInfo.parent == mote){
+	          // If current mote's parent is original mote, then the loop forms;
+                  loopForming = TRUE;
+		  break;
+	       }
+	       else  
+	          srcMote = routeInfo.parent; 
+	     }
+          }
+
+	  return loopForming;
+       }
+    }
+
+    bool sim_fulfill_no_loop_liveness_property() {
+       int mote;
+       unsigned long tmpMote = sim_node();
+
+       if(!sim_is_all_motes_on()) 
+	  return FALSE;
+       else {
+         for(mote = 0; mote < sim_max_mote_num(); mote++) {
+            if(sim_mote_status(mote) == ON) {
+	      sim_set_node(mote);
+
+	      if(routeInfo.parent >= sim_simulated_mote_num()) {
+		 sim_set_node(tmpMote);
+	         return FALSE;
+	      }
+              if(sim_mote_form_loop(mote)) {
+		 sim_set_node(tmpMote);
+	         return FALSE;
+              }
+	    }
+         }
+
+         sim_set_node(tmpMote);
+         return TRUE;
+       }
+    }
+
+    // The second liveness property...
+    // The system needs to run a prefix way to enter the steady state for this liveness property..
+
+    // If returns TRUE, the merge succeed
+    // Otherwise, the merge failed 
+
+    bool sim_merge_into_tree(int mote) {
+        bool merge = FALSE;
+        unsigned long srcMote = mote;
+
+	while(TRUE) {
+	   sim_set_node(srcMote);
+
+	   if(sim_mote_status(routeInfo.parent) != ON) {
+	      // The parent should not be dead, but it is...
+	      // Merge fails...
+	      break;
+	   }
+	   else {
+             if(sim_mote_is_root(routeInfo.parent)) {
+	         // Means that the parent is root, merge succeeds...
+		 merge = TRUE;
+		 break;
+	     }
+             else { 
+	        if(routeInfo.parent == mote){
+	           // if current mote's parent is original mote, then the loop forms; 
+		   // in other words, the merge fails;
+		   break;
+	        }
+	        else  
+	           srcMote = routeInfo.parent; 
+	     }
+	   }
+	}
+
+	return merge;
+    }
+
+    bool sim_find_parent_succeed(int mote) {
+        if(state_is_root)
+          return TRUE;
+	else {
+          if(routeInfo.parent >= sim_simulated_mote_num()) 
+	     return FALSE;
+	  else {
+             if(routeInfo.parent == mote)
+	       return TRUE; // parent is itself, find parent successfully
+	     else {
+	       if(sim_merge_into_tree(mote))
+	         return TRUE;
+	       else
+		 return FALSE;
+	     }
+	  }
+	}
+    }
+
+    bool sim_fulfill_find_parent_liveness_property() {
+        int mote;
+	int tmpMote = sim_node();
+
+        for(mote = 0; mote < sim_max_mote_num(); mote++) {
+	   if(sim_mote_status(mote) == ON) {
+	     sim_set_node(mote);
+
+             if(!sim_find_parent_succeed(mote)) {
+	       sim_set_node(tmpMote);
+	       return FALSE;
+	     }
+	   }
+	 }
+
+  	 sim_set_node(tmpMote);
+	 return TRUE;
+    }
+
+   
+    command bool Property1.safetyPropertyCheck() {
+	return TRUE;
+    }
+
+    command bool Property1.livenessPropertyCheck() {
+	return sim_fulfill_no_loop_liveness_property();
+    }
+    
+    command bool Property2.safetyPropertyCheck() {
+	return TRUE;
+    }
+    
+     command bool Property2.livenessPropertyCheck() {
+	return sim_fulfill_find_parent_liveness_property();
+    }
+  </pre>
+		
+	 <p>
+			<li> DRIP </li>
+   </p>
+  
+  <pre>
+   	 ./preprocessing DRIPPROPERTY propertyWiring.txt
+  </pre>
+  <pre>
+  	  bool sim_is_all_motes_dissemination_complete() {
+     int i;
+     uint8_t dissem32 = 0;
+     uint8_t undissem32 = 0;
+     uint8_t dissem16 = 0;
+     uint8_t undissem16 = 0;
+
+     for(i = 0; i < sim_max_mote_num(); i++) {
+        if(sim_mote_status(i) == ON) {
+           int tmpNode = sim_node();
+           sim_set_node(i);
+
+           if(dissemComplete32 == FALSE)
+             undissem32++;
+           else
+             dissem32++;
+
+           if(dissemComplete16 == FALSE)
+             undissem16++;
+           else
+             dissem16++;
+
+           sim_set_node(tmpNode);
+        }
+     }
+
+     if(undissem32 != 0 || undissem16 != 0)
+        return FALSE;
+     else {
+        if(dissem32 != sim_simulated_mote_num() || dissem16 != sim_simulated_mote_num())
+          return FALSE;
+        else
+          return TRUE;
+     }
+  }
+
+        command bool Property1.safetyPropertyCheck() {
+           return TRUE;
+        }
+        command bool Property1.livenessPropertyCheck() {
+           return sim_is_all_motes_dissemination_complete();
+        }
+  </pre>
+  
+   <p>
+			<li> DIP </li>
+   </p>
+  
+  <pre>
+   	 ./preprocessing DIPPROPERTY propertyWiring.txt
+  </pre>
+  
+  <pre>
+  	 bool sim_is_all_motes_dissemination_complete() {
+     int i;
+     uint8_t dissem = 0;
+     uint8_t undissem = 0;
+
+     for(i = 0; i < sim_max_mote_num(); i++) {
+        if(sim_mote_status(i) == ON) {
+           int tmpNode = sim_node();
+           sim_set_node(i);
+
+           if(dissemComplete == FALSE) 
+	     undissem++;
+	   else
+	     dissem++; 
+	   
+           sim_set_node(tmpNode); 
+	}
+     }
+
+     if(undissem != 0)
+        return FALSE;
+     else {
+        if(dissem != sim_simulated_mote_num())
+          return FALSE;
+        else
+	  return TRUE; 
+     }
+  }
+
+  command bool Property1.safetyPropertyCheck() {
+     return TRUE;
+  }
+
+  command bool Property1.livenessPropertyCheck() {
+     return sim_is_all_motes_dissemination_complete();
+  }
+  </pre>
+  
+   <p>
+			<li> DHV </li>
+   </p>
+  
+  <pre>
+   	 ./preprocessing DHVPROPERTY propertyWiring.txt
+  </pre>
+  <pre>
+  	  bool sim_is_all_motes_dissemination_complete() {
+     int i;
+     uint8_t dissem = 0;
+     uint8_t undissem = 0;
+
+     for(i = 0; i < sim_max_mote_num(); i++) {
+        if(sim_mote_status(i) == ON) {
+           int tmpNode = sim_node();
+           sim_set_node(i);
+
+           if(dissemComplete == FALSE) 
+	     undissem++;
+	   else
+	     dissem++; 
+	   
+           sim_set_node(tmpNode); 
+	}
+     }
+
+     if(undissem != 0)
+        return FALSE;
+     else {
+        if(dissem != sim_simulated_mote_num())
+          return FALSE;
+        else
+	  return TRUE; 
+     }
+  }
+
+  command bool Property1.safetyPropertyCheck() {
+     return TRUE;
+  }
+
+  command bool Property1.livenessPropertyCheck() {
+     return sim_is_all_motes_dissemination_complete();
+  }
+  </pre>
+  
+   <p>
+			<li> FTSP </li>
+   </p>
+  
+  <pre>
+   	 ./preprocessing FTSPPROPERTY propertyWiring.txt
+  </pre>
+  <pre>
+  	    bool sim_is_all_motes_synchronized() {
+        int i;
+	uint8_t synced = 0;
+	uint8_t unsynced = 0;
+
+        for(i = 0; i < sim_max_mote_num(); i++) {
+           if(sim_mote_status(i) == ON) {
+              int tmpNode = sim_node();
+              sim_set_node(i);
+
+              if(is_synced() == FAIL) 
+		 unsynced++;
+	      else
+	         synced++; 
+
+              sim_set_node(tmpNode); 
+            }
+        }       
+
+        if(unsynced != 0)
+           return FALSE;
+	else {
+	   if(synced != sim_simulated_mote_num())
+	     return FALSE;
+	   else
+	     return TRUE; 
+	}
+    }
+    
+    command bool Property1.safetyPropertyCheck() {
+	return TRUE;
+    }
+
+    command bool Property1.livenessPropertyCheck() {
+	return sim_is_all_motes_synchronized();
+    }
+  </pre>
+	</body>
+</html>
+
